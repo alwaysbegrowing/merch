@@ -8,22 +8,28 @@ const { Header, Footer, Content } = Layout;
 
 
 const columns = [
+
   {
     title: 'Item Name',
-    dataIndex: 'name',
     key: 'name',
+    render: (data) => {
+      const site = "https://oldschool.runescape.wiki/images/a/a3/"
+      const modifiedIcon = data.icon.replace(/ /g, "_");
+      const url = site + modifiedIcon
+      console.log({ modifiedIcon })
+      return <><img src={url}></img>{data.name}</>
+    }
+
   },
   {
-    title: 'Price',
-    dataIndex: 'price',
-    key: 'price',
+    title: 'Profit',
+    dataIndex: 'niceProfit',
+    key: 'profit'
   },
-  {
-    title: 'Volume',
-    dataIndex: 'volume',
-    key: 'volume',
-  },
+
 ];
+
+
 
 const fetcher = (...args) => fetch(...args).then(res => res.json())
 
@@ -50,7 +56,7 @@ function usePrices() {
     const maxBuy = Math.min(limit, volume)
     const profit = (sellValue - low) * (maxBuy)
     if (!high || !low || (high <= low) || (Math.abs(highPriceVolume - lowPriceVolume) > (1.5 * volume))) return
-    items.push({ name: price3[key].name, niceProfit: profit.toLocaleString(), profit, high, highPriceVolume, low, lowPriceVolume, limit })
+    items.push({ name: price3[key].name, icon: price3[key].icon, niceProfit: profit.toLocaleString(), profit, high, highPriceVolume, low, lowPriceVolume, limit })
 
   })
   items.sort((a, b) => b.profit - a.profit)
@@ -59,9 +65,10 @@ function usePrices() {
 
 export default function Home() {
   const { data: dataSource, isLoading, isError } = usePrices()
+  console.log(dataSource)
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Header style={{ backgroundColor: "#f0f0f0" }}>
+      <Header style={{ backgroundColor: "#d9d9d9" }}>
         <Row justify="space-between">
           <Col>
             <img
@@ -69,12 +76,12 @@ export default function Home() {
                 float: "left",
                 height: 31,
                 // width: 200,
-                margin: "16px 0px 16px 0",
+                margin: "16px 8px 16px ",
               }}
-              src="https://tse3.mm.bing.net/th?id=OIP.XYaeDXspGLV6vl4xFh7CDgHaHa"
+              src="https://theme.zdassets.com/theme_assets/851856/a4c948526ee4b6f23c99ac58ff4a636c25e0bf9d.png"
               alt="abg logo"
             />
-            <b> Runescape Merch</b>
+            <b>  Runescape Merch</b>
           </Col>
           <Col>
             <Button
@@ -94,13 +101,18 @@ export default function Home() {
           style={{ backgroundColor: "#fff" }}
           title="Item Flipper"
         >
-          Enter a smart contract address below to see all historic events
-          emitted from that contract.{" "}
+          See the highest profit items to flip within the last 5 minutes.{" "}
         </PageHeader>
 
         <div style={{ background: "#fff", padding: 24 }}>
           <div>
-            <Table loading={isLoading} dataSource={dataSource} columns={columns} />
+            <Table
+              loading={isLoading}
+              dataSource={dataSource}
+              columns={columns}
+              rowKey={(index) => {
+                dataSource.logIndex + Math.random() * index
+              }} />
           </div>
         </div>
       </Content>
