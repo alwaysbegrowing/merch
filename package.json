@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "antd": "^4.23.1",
+    "babel-plugin-import": "^1.13.5",
+    "babel-plugin-module-resolver": "^4.1.0",
     "next": "12.3.0",
+    "next-plugin-antd-less": "^1.8.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
