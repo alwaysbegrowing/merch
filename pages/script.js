@@ -1,4 +1,4 @@
-export default function Script() {
+export default async function handler(req, res) {
 
     const data1 = await fetch("https://prices.runescape.wiki/api/v1/osrs/5m");
     const price1 = (await data1.json()).data
