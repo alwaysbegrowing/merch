@@ -2206,6 +2206,16 @@ react@18.2.0:
   dependencies:
     loose-envify "^1.1.0"
 
+readable-timestamp-js@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/readable-timestamp-js/-/readable-timestamp-js-1.0.2.tgz#475ae594995dc4c34408d5276151fd90b4111646"
+  integrity sha512-sGQ9FINFN0Bcbu6TtuDXgKcIERWt/QVzC4y7Mcnt6yt/hvrYvAYvLPfGQ4Lzf2aYcXeVFa4hqGK6o4/EqqAFvg==
+
+readable-timestamp@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/readable-timestamp/-/readable-timestamp-0.2.0.tgz#e78d6e0d0f925b5e97127ddacfc6700166abb16c"
+  integrity sha512-xogivXG1tHap/O2F6HOpKXY2mUAGBFu8twvfa89NRGxJ59NkaUE+PMA3Vqg2tBH4y7nsiXpk7Mzn7KVXl3/aog==
+
 regenerator-runtime@^0.13.4:
   version "0.13.9"
   resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.13.9.tgz#8925742a98ffd90814988d7566ad30ca3b263b52"

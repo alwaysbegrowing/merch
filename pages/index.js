@@ -3,6 +3,8 @@ import Image from 'next/image'
 import { Layout, Row, Col, Button, PageHeader, Input, Table } from 'antd';
 import { GithubOutlined } from "@ant-design/icons";
 import useSWR from 'swr';
+import { timeDifferenceForDate, readableTimestamp } from "readable-timestamp-js";
+
 
 const { Header, Footer, Content } = Layout;
 
@@ -26,11 +28,6 @@ const columns = [
     key: 'profit'
   },
   {
-    title: 'Sell Price',
-    dataIndex: 'high',
-    key: 'high'
-  },
-  {
     title: 'Buy Price',
     dataIndex: 'low',
     key: 'low'
@@ -41,17 +38,30 @@ const columns = [
     key: 'lowPriceVolume'
   },
   {
+    title: "Buy Time",
+    dataIndex: "lowTime",
+    key: 'lowTime'
+  },
+  {
+    title: 'Sell Price',
+    dataIndex: 'high',
+    key: 'high'
+  },
+  {
     title: 'Sell Volume',
     dataIndex: 'highPriceVolume',
     key: 'highPriceVolume'
   },
-
+  {
+    title: "Sell Time",
+    dataIndex: "highTime",
+    key: 'highTime'
+  },
   {
     title: 'Item Limit',
     dataIndex: 'limit',
     key: 'limit'
-  }
-
+  },
 ];
 
 
@@ -59,9 +69,9 @@ const columns = [
 const fetcher = (...args) => fetch(...args).then(res => res.json())
 
 function usePrices() {
-  const { data: tempPrice1, error1 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/5m', fetcher);
-  const { data: tempPrice2, error2 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/latest', fetcher);
-  const { data: allItems, error3 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/mapping', fetcher);
+  const { data: tempPrice1, error1 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/5m', fetcher, { refreshInterval: 5000 });
+  const { data: tempPrice2, error2 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/latest', fetcher, { refreshInterval: 5000 });
+  const { data: allItems, error3 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/mapping', fetcher, { refreshInterval: 5000 });
   if (!tempPrice1 || !tempPrice2 || !allItems) return { isLoading: true }
   const price1 = tempPrice1.data
   const price2 = tempPrice2.data
@@ -74,18 +84,18 @@ function usePrices() {
   keys.forEach(key => {
     const limit = price3[key].limit
     const { avgHighPrice, highPriceVolume, avgLowPrice, lowPriceVolume } = price1[key]
-    const { high, low } = price2[key]
+    const { high, low, highTime, lowTime } = price2[key]
     const volume = (highPriceVolume + lowPriceVolume) / 2
     const tax = (high * .01)
     const sellValue = high - tax
     const maxBuy = Math.min(limit, volume)
     const profit = (sellValue - low) * (maxBuy)
-    if (!high || !low || (high <= low) || (Math.abs(highPriceVolume - lowPriceVolume) > (1.5 * volume))) return
+    if (!high || !low || (high <= low)) return
     items.push({
       name: price3[key].name, icon: price3[key].icon, niceProfit: profit.toLocaleString("en", {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-      }), profit, high: high.toLocaleString(), highPriceVolume: highPriceVolume.toLocaleString(), low: low.toLocaleString(), lowPriceVolume: lowPriceVolume.toLocaleString(), limit: limit?.toLocaleString()
+      }), profit, high: high.toLocaleString(), highPriceVolume: highPriceVolume.toLocaleString(), low: low.toLocaleString(), lowPriceVolume: lowPriceVolume.toLocaleString(), limit: limit?.toLocaleString(), highTime: timeDifferenceForDate(highTime * 1000), lowTime: timeDifferenceForDate(lowTime * 1000)
     })
 
   })
