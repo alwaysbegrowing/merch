@@ -16,8 +16,7 @@ const columns = [
       const site = "https://oldschool.runescape.wiki/images/a/a3/"
       const modifiedIcon = data.icon.replace(/ /g, "_");
       const url = site + modifiedIcon
-      console.log({ modifiedIcon })
-      return <><img src={url}></img>{data.name}</>
+      return <><img style={{ margin: 8 }} src={url}></img>{data.name}</>
     }
 
   },
@@ -26,6 +25,32 @@ const columns = [
     dataIndex: 'niceProfit',
     key: 'profit'
   },
+  {
+    title: 'Sell Price',
+    dataIndex: 'high',
+    key: 'high'
+  },
+  {
+    title: 'Buy Price',
+    dataIndex: 'low',
+    key: 'low'
+  },
+  {
+    title: 'Buy Volume',
+    dataIndex: 'lowPriceVolume',
+    key: 'lowPriceVolume'
+  },
+  {
+    title: 'Sell Volume',
+    dataIndex: 'highPriceVolume',
+    key: 'highPriceVolume'
+  },
+
+  {
+    title: 'Item Limit',
+    dataIndex: 'limit',
+    key: 'limit'
+  }
 
 ];
 
@@ -56,7 +81,12 @@ function usePrices() {
     const maxBuy = Math.min(limit, volume)
     const profit = (sellValue - low) * (maxBuy)
     if (!high || !low || (high <= low) || (Math.abs(highPriceVolume - lowPriceVolume) > (1.5 * volume))) return
-    items.push({ name: price3[key].name, icon: price3[key].icon, niceProfit: profit.toLocaleString(), profit, high, highPriceVolume, low, lowPriceVolume, limit })
+    items.push({
+      name: price3[key].name, icon: price3[key].icon, niceProfit: profit.toLocaleString("en", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }), profit, high: high.toLocaleString(), highPriceVolume: highPriceVolume.toLocaleString(), low: low.toLocaleString(), lowPriceVolume: lowPriceVolume.toLocaleString(), limit: limit?.toLocaleString()
+    })
 
   })
   items.sort((a, b) => b.profit - a.profit)
@@ -65,7 +95,6 @@ function usePrices() {
 
 export default function Home() {
   const { data: dataSource, isLoading, isError } = usePrices()
-  console.log(dataSource)
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Header style={{ backgroundColor: "#d9d9d9" }}>
