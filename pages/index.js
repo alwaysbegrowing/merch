@@ -39,20 +39,17 @@ const columns = [
     }
 
   },
+  {
+    title: 'Average Prices',
+    key: 'name',
+    render: (data) => {
+      return <>
+        <div>Buy Price: {data.avgLowPrice}</div>
+        <div>Sell Price: {data.avgHighPrice} </div>
+      </>
+    }
 
-
-  // {
-  //   title: 'Buy Volume',
-  //   dataIndex: 'lowPriceVolume',
-  //   key: 'lowPriceVolume'
-  // },
-
-
-  // {
-  //   title: 'Sell Volume',
-  //   dataIndex: 'highPriceVolume',
-  //   key: 'highPriceVolume'
-  // },
+  },
   {
     title: 'Daily Volume',
     dataIndex: 'dailyVolume',
@@ -99,7 +96,7 @@ function usePrices() {
       name: price3[key].name, icon: price3[key].icon, niceProfit: profit.toLocaleString("en", {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-      }), profit, high: high.toLocaleString(), highPriceVolume: highPriceVolume.toLocaleString(), low: low.toLocaleString(), dailyVolume: volumes.data[key], lowPriceVolume: lowPriceVolume.toLocaleString(), limit: limit?.toLocaleString(), highTime: timeDifferenceForDate(highTime * 1000), lowTime: timeDifferenceForDate(lowTime * 1000)
+      }), profit, avgHighPrice, avgLowPrice, high: high.toLocaleString(), highPriceVolume: highPriceVolume.toLocaleString(), low: low.toLocaleString(), dailyVolume: volumes.data[key], lowPriceVolume: lowPriceVolume.toLocaleString(), limit: limit?.toLocaleString(), highTime: timeDifferenceForDate(highTime * 1000), lowTime: timeDifferenceForDate(lowTime * 1000)
     })
 
   })
