@@ -22,46 +22,48 @@ const columns = [
     }
 
   },
+
   {
     title: 'Profit',
     dataIndex: 'niceProfit',
     key: 'profit'
   },
   {
-    title: 'Buy Price',
-    dataIndex: 'low',
-    key: 'low'
+    title: 'Spread',
+    key: 'name',
+    render: (data) => {
+      return <>
+        <div>Buy Price: {data.low} {data.lowTime}</div>
+        <div>Sell Price: {data.high} {data.highTime}</div>
+      </>
+    }
+
   },
+
+
+  // {
+  //   title: 'Buy Volume',
+  //   dataIndex: 'lowPriceVolume',
+  //   key: 'lowPriceVolume'
+  // },
+
+
+  // {
+  //   title: 'Sell Volume',
+  //   dataIndex: 'highPriceVolume',
+  //   key: 'highPriceVolume'
+  // },
   {
-    title: 'Buy Volume',
-    dataIndex: 'lowPriceVolume',
-    key: 'lowPriceVolume'
-  },
-  {
-    title: "Buy Time",
-    dataIndex: "lowTime",
-    key: 'lowTime'
-  },
-  {
-    title: 'Sell Price',
-    dataIndex: 'high',
-    key: 'high'
-  },
-  {
-    title: 'Sell Volume',
-    dataIndex: 'highPriceVolume',
-    key: 'highPriceVolume'
-  },
-  {
-    title: "Sell Time",
-    dataIndex: "highTime",
-    key: 'highTime'
+    title: 'Daily Volume',
+    dataIndex: 'dailyVolume',
+    key: 'dailyVolume'
   },
   {
     title: 'Item Limit',
     dataIndex: 'limit',
     key: 'limit'
   },
+
 ];
 
 
@@ -72,6 +74,8 @@ function usePrices() {
   const { data: tempPrice1, error1 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/5m', fetcher, { refreshInterval: 5000 });
   const { data: tempPrice2, error2 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/latest', fetcher, { refreshInterval: 5000 });
   const { data: allItems, error3 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/mapping', fetcher, { refreshInterval: 5000 });
+  const { data: volumes, error4 } = useSWR('https://prices.runescape.wiki/api/v1/osrs/volumes', fetcher, { refreshInterval: 5000 });
+
   if (!tempPrice1 || !tempPrice2 || !allItems) return { isLoading: true }
   const price1 = tempPrice1.data
   const price2 = tempPrice2.data
@@ -95,12 +99,12 @@ function usePrices() {
       name: price3[key].name, icon: price3[key].icon, niceProfit: profit.toLocaleString("en", {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-      }), profit, high: high.toLocaleString(), highPriceVolume: highPriceVolume.toLocaleString(), low: low.toLocaleString(), lowPriceVolume: lowPriceVolume.toLocaleString(), limit: limit?.toLocaleString(), highTime: timeDifferenceForDate(highTime * 1000), lowTime: timeDifferenceForDate(lowTime * 1000)
+      }), profit, high: high.toLocaleString(), highPriceVolume: highPriceVolume.toLocaleString(), low: low.toLocaleString(), dailyVolume: volumes.data[key], lowPriceVolume: lowPriceVolume.toLocaleString(), limit: limit?.toLocaleString(), highTime: timeDifferenceForDate(highTime * 1000), lowTime: timeDifferenceForDate(lowTime * 1000)
     })
 
   })
   items.sort((a, b) => b.profit - a.profit)
-  return { data: items, isLoading: false, isError: error1 || error2 || error3 }
+  return { data: items, isLoading: false, isError: error1 || error2 || error3 || error4 }
 }
 
 export default function Home() {
@@ -149,6 +153,7 @@ export default function Home() {
               loading={isLoading}
               dataSource={dataSource}
               columns={columns}
+              scroll={{ x: 400 }}
               rowKey={(index) => {
                 dataSource.logIndex + Math.random() * index
               }} />
