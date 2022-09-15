@@ -18,7 +18,8 @@ const columns = [
       const site = "https://oldschool.runescape.wiki/images/a/a3/"
       const modifiedIcon = data.icon.replace(/ /g, "_");
       const url = site + modifiedIcon
-      return <><img style={{ margin: 8 }} src={url}></img>{data.name}</>
+      return <a target="_blank" rel="noopener noreferrer" href={`https://prices.runescape.wiki/osrs/item/${data.id}`}><img style={{ margin: 8 }} src={url}></img>
+        {data.name}</a>
     }
 
   },
@@ -33,8 +34,8 @@ const columns = [
     key: 'name',
     render: (data) => {
       return <>
-        <div>Buy Price: {data.low} {data.lowTime}</div>
-        <div>Sell Price: {data.high} {data.highTime}</div>
+        <div>Buy Price: <span style={{ color: "#fadb14" }}>{data.low}</span> {data.lowTime}</div>
+        <div>Sell Price:  <span style={{ color: "#fadb14" }}>{data.high}</span> {data.highTime}</div>
       </>
     }
 
@@ -44,8 +45,8 @@ const columns = [
     key: 'name',
     render: (data) => {
       return <>
-        <div>Buy Price: {data.avgLowPrice}</div>
-        <div>Sell Price: {data.avgHighPrice} </div>
+        <div>Buy Price:  <span style={{ color: "#fadb14" }}>{data.avgLowPrice?.toLocaleString()}</span></div>
+        <div>Sell Price:  <span style={{ color: "#fadb14" }}>{data.avgHighPrice?.toLocaleString()}</span> </div>
       </>
     }
 
@@ -89,14 +90,13 @@ function usePrices() {
     const volume = (highPriceVolume + lowPriceVolume) / 2
     const tax = (high * .01)
     const sellValue = high - tax
-    const maxBuy = Math.min(limit, volume)
-    const profit = (sellValue - low) * (maxBuy)
+    const profit = (sellValue - low) * Math.min(volumes.data[key] / 24, limit)
     if (!high || !low || (high <= low)) return
     items.push({
       name: price3[key].name, icon: price3[key].icon, niceProfit: profit.toLocaleString("en", {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-      }), profit, avgHighPrice, avgLowPrice, high: high.toLocaleString(), highPriceVolume: highPriceVolume.toLocaleString(), low: low.toLocaleString(), dailyVolume: volumes.data[key], lowPriceVolume: lowPriceVolume.toLocaleString(), limit: limit?.toLocaleString(), highTime: timeDifferenceForDate(highTime * 1000), lowTime: timeDifferenceForDate(lowTime * 1000)
+      }), id: key, profit, avgHighPrice, avgLowPrice, high: high.toLocaleString(), highPriceVolume: highPriceVolume.toLocaleString(), low: low.toLocaleString(), dailyVolume: volumes.data[key], lowPriceVolume: lowPriceVolume.toLocaleString(), limit: limit?.toLocaleString(), highTime: timeDifferenceForDate(highTime * 1000), lowTime: timeDifferenceForDate(lowTime * 1000)
     })
 
   })
@@ -147,6 +147,7 @@ export default function Home() {
         <div style={{ background: "#fff", padding: 24 }}>
           <div>
             <Table
+              pagination={{ defaultPageSize: 100 }}
               loading={isLoading}
               dataSource={dataSource}
               columns={columns}
