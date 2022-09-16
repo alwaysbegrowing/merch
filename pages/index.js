@@ -33,8 +33,22 @@ const columns = [
 
   {
     title: "Profit",
-    dataIndex: "niceProfit",
+    render: (data) => {
+      return data.profit.toLocaleString("en", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })
+    },
     key: "profit",
+  },
+  {
+    title: "Margin",
+    render: (data) => {
+      return data.margin.toLocaleString("en", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })
+    }, key: "margin",
   },
   {
     title: "Spread",
@@ -43,13 +57,16 @@ const columns = [
       return (
         <>
           <li>
-            Buy Price: <span style={{ color: "#fadb14" }}>{data.low}</span>
+            Buy Price: <span style={{ color: "#52c41a" }}>{data.low}</span>
           </li>
-          <li>{data.lowTime}</li>
+          <li style={{ color: "#bfbfbf" }}>{data.lowTime}</li>
           <li>
-            Sell Price: <span style={{ color: "#fadb14" }}>{data.high}</span>
+            Sell Price: <span style={{ color: "#52c41a" }}>{data.high}</span>
           </li>
-          <li>{data.highTime}</li>
+          <li>
+            <li style={{ color: "#bfbfbf" }}>{data.highTime}</li>
+
+          </li>
         </>
       );
     },
@@ -62,13 +79,13 @@ const columns = [
         <>
           <li>
             Buy Price:{" "}
-            <span style={{ color: "#fadb14" }}>
+            <span style={{ color: "#52c41a" }}>
               {data.avgLowPrice?.toLocaleString()}
             </span>
           </li>
           <li>
             Sell Price:{" "}
-            <span style={{ color: "#fadb14" }}>
+            <span style={{ color: "#52c41a" }}>
               {data.avgHighPrice?.toLocaleString()}
             </span>{" "}
           </li>
@@ -77,8 +94,13 @@ const columns = [
     },
   },
   {
-    title: "Daily Volume",
-    dataIndex: "dailyVolume",
+    title: "Hourly Volume",
+    render: (data) => {
+      return (data.dailyVolume / 24).toLocaleString("en", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })
+    },
     key: "dailyVolume",
   },
   {
@@ -104,7 +126,6 @@ function usePrices() {
   const { data: allItems, error3 } = useSWR(
     "https://prices.runescape.wiki/api/v1/osrs/mapping",
     fetcher,
-    { refreshInterval: 5000 }
   );
   const { data: volumes, error4 } = useSWR(
     "https://prices.runescape.wiki/api/v1/osrs/volumes",
@@ -126,7 +147,6 @@ function usePrices() {
     const { avgHighPrice, highPriceVolume, avgLowPrice, lowPriceVolume } =
       price1[key];
     const { high, low, highTime, lowTime } = price2[key];
-    const volume = (highPriceVolume + lowPriceVolume) / 2;
     const tax = high * 0.01;
     const sellValue = high - tax;
     const profit = (sellValue - low) * Math.min(volumes.data[key] / 24, limit);
@@ -134,10 +154,8 @@ function usePrices() {
     items.push({
       name: price3[key].name,
       icon: price3[key].icon,
-      niceProfit: profit.toLocaleString("en", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }),
+      margin: sellValue - low,
+
       id: key,
       profit,
       avgHighPrice,
