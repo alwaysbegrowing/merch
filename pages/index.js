@@ -3,9 +3,9 @@ import Image from "next/image";
 import { Layout, Row, Col, Button, PageHeader, Input, Table } from "antd";
 import { GithubOutlined } from "@ant-design/icons";
 import useSWR from "swr";
+import { useState } from "react";
 import {
   timeDifferenceForDate,
-  readableTimestamp,
 } from "readable-timestamp-js";
 
 const { Header, Footer, Content } = Layout;
@@ -34,15 +34,22 @@ const columns = [
   {
     title: "Profit",
     render: (data) => {
-      return data.profit.toLocaleString("en", {
+      return <><div>Spread: {data.profit.toLocaleString("en", {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-      })
+      })}
+        <div>Average:{data.avgProfit.toLocaleString("en", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}
+        </div>
+      </div>
+      </>
     },
     key: "profit",
   },
   {
-    title: "Margin",
+    title: "Post Tax Margin",
     render: (data) => {
       return data.margin.toLocaleString("en", {
         minimumFractionDigits: 0,
@@ -57,7 +64,7 @@ const columns = [
       return (
         <>
           <li>
-            Buy Price: <span style={{ color: "#52c41a" }}>{data.low}</span>
+            Buy Price: <span style={{ color: "#52c41a" }}>{data.low.toLocaleString()}</span>
           </li>
           <li style={{ color: "#bfbfbf" }}>{data.lowTime}</li>
           <li>
@@ -94,7 +101,7 @@ const columns = [
     },
   },
   {
-    title: "Hourly Volume",
+    title: "Average Hourly Volume",
     render: (data) => {
       return (data.dailyVolume / 24).toLocaleString("en", {
         minimumFractionDigits: 0,
@@ -108,20 +115,50 @@ const columns = [
     dataIndex: "limit",
     key: "limit",
   },
+  {
+    title: "Full Flip Cost",
+    render: (data) => {
+      return (data.limit * data.low).toLocaleString("en", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })
+    },
+    key: "flipCost",
+  },
+  {
+    title: "ROI",
+    render: (data) => {
+      const cost = data.limit * data.low
+      const roi = ((data.profit / cost) * 100).toLocaleString() + "%"
+      return roi
+    },
+    key: "flipCost",
+  },
 ];
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 function usePrices() {
+  const [lastUpdated, setLastUpdated] = useState(null);
+
+
   const { data: tempPrice1, error1 } = useSWR(
     "https://prices.runescape.wiki/api/v1/osrs/5m",
     fetcher,
-    { refreshInterval: 5000 }
+    {
+      refreshInterval: 1000, onSuccess: (data) => {
+        const didDataChange = JSON.stringify(data) !== JSON.stringify(tempPrice1)
+        if (didDataChange) {
+          setLastUpdated(new Date());
+        }
+
+      }
+    },
   );
   const { data: tempPrice2, error2 } = useSWR(
     "https://prices.runescape.wiki/api/v1/osrs/latest",
     fetcher,
-    { refreshInterval: 5000 }
+    { refreshInterval: 1000 }
   );
   const { data: allItems, error3 } = useSWR(
     "https://prices.runescape.wiki/api/v1/osrs/mapping",
@@ -130,7 +167,7 @@ function usePrices() {
   const { data: volumes, error4 } = useSWR(
     "https://prices.runescape.wiki/api/v1/osrs/volumes",
     fetcher,
-    { refreshInterval: 5000 }
+    { refreshInterval: 1000 }
   );
 
   if (!tempPrice1 || !tempPrice2 || !allItems) return { isLoading: true };
@@ -150,36 +187,44 @@ function usePrices() {
     const tax = high * 0.01;
     const sellValue = high - tax;
     const profit = (sellValue - low) * Math.min(volumes.data[key] / 24, limit);
-    if (!high || !low || high <= low) return;
+    const averageHighTax = avgHighPrice * 0.01;
+
+    const averageProfit = ((avgHighPrice - averageHighTax) - avgLowPrice) * Math.min(volumes.data[key] / 24, limit);
+    const avgProfit = avgHighPrice && avgLowPrice ? averageProfit : 0
     items.push({
+      avgProfit,
       name: price3[key].name,
       icon: price3[key].icon,
       margin: sellValue - low,
-
       id: key,
       profit,
       avgHighPrice,
       avgLowPrice,
       high: high.toLocaleString(),
       highPriceVolume: highPriceVolume.toLocaleString(),
-      low: low.toLocaleString(),
+      low,
       dailyVolume: volumes.data[key],
       lowPriceVolume: lowPriceVolume.toLocaleString(),
-      limit: limit?.toLocaleString(),
+      limit,
       highTime: timeDifferenceForDate(highTime * 1000),
       lowTime: timeDifferenceForDate(lowTime * 1000),
     });
   });
-  items.sort((a, b) => b.profit - a.profit);
+  items.sort((a, b) => {
+    return b.profit - a.profit
+  }
+  );
+
   return {
     data: items,
     isLoading: false,
     isError: error1 || error2 || error3 || error4,
+    lastUpdated
   };
 }
 
 export default function Home() {
-  const { data: dataSource, isLoading, isError } = usePrices();
+  const { data: dataSource, isLoading, isError, lastUpdated } = usePrices();
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Header style={{ backgroundColor: "#d9d9d9" }}>
@@ -189,11 +234,10 @@ export default function Home() {
               style={{
                 float: "left",
                 height: 31,
-                // width: 200,
                 margin: "16px 8px 16px ",
               }}
               src="https://theme.zdassets.com/theme_assets/851856/a4c948526ee4b6f23c99ac58ff4a636c25e0bf9d.png"
-              alt="abg logo"
+              alt="rs logo"
             />
             <b> Runescape Merch</b>
           </Col>
@@ -210,9 +254,10 @@ export default function Home() {
         </Row>
       </Header>
       <Content style={{ padding: "0 24px", marginTop: 16 }}>
-        <PageHeader style={{ backgroundColor: "#fff" }} title="Item Flipper">
-          See the highest profit items to flip within the last 5 minutes.{" "}
-        </PageHeader>
+        {lastUpdated && <PageHeader style={{ backgroundColor: "#fff" }} title="Item Flipper">
+          See the highest profit items to flip based on spread volume and limit.
+          Data last updated {new Date() - lastUpdated} seconds ago.
+        </PageHeader>}
 
         <div style={{ background: "#fff", padding: 24 }}>
           <div>
