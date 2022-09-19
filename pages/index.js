@@ -177,21 +177,21 @@ function usePrices() {
   allItems.forEach((item) => {
     price3[item.id.toString()] = item;
   });
-  const keys = Object.keys(price1);
-  const items = [];
-  keys.forEach((key) => {
+  const keys = Object.keys(price3);
+  const items = keys.map((key) => {
     const limit = price3[key].limit;
     const { avgHighPrice, highPriceVolume, avgLowPrice, lowPriceVolume } =
-      price1[key];
-    const { high, low, highTime, lowTime } = price2[key];
+      price1[key] || {};
+    const { high, low, highTime, lowTime } = price2[key] || {};
     const tax = high * 0.01;
     const sellValue = high - tax;
-    const profit = (sellValue - low) * Math.min(volumes.data[key] / 24, limit);
+    // const profit = (sellValue - low) * Math.min(volumes.data[key] / 24, limit);
     const averageHighTax = avgHighPrice * 0.01;
-
+    const hourlyVolume = volumes.data[key] / 24
+    const profit = (sellValue - low) * Math.min(limit, hourlyVolume)
     const averageProfit = ((avgHighPrice - averageHighTax) - avgLowPrice) * Math.min(volumes.data[key] / 24, limit);
     const avgProfit = avgHighPrice && avgLowPrice ? averageProfit : 0
-    items.push({
+    return {
       avgProfit,
       name: price3[key].name,
       icon: price3[key].icon,
@@ -200,23 +200,24 @@ function usePrices() {
       profit,
       avgHighPrice,
       avgLowPrice,
-      high: high.toLocaleString(),
-      highPriceVolume: highPriceVolume.toLocaleString(),
+      high: high?.toLocaleString(),
+      highPriceVolume: highPriceVolume?.toLocaleString(),
       low,
       dailyVolume: volumes.data[key],
-      lowPriceVolume: lowPriceVolume.toLocaleString(),
+      lowPriceVolume: lowPriceVolume?.toLocaleString(),
       limit,
       highTime: timeDifferenceForDate(highTime * 1000),
       lowTime: timeDifferenceForDate(lowTime * 1000),
-    });
-  });
-  items.sort((a, b) => {
+    };
+  })
+  const data = items.filter(num => !isNaN(num.profit))
+  data.sort((a, b) => {
     return b.profit - a.profit
   }
   );
 
   return {
-    data: items,
+    data,
     isLoading: false,
     isError: error1 || error2 || error3 || error4,
     lastUpdated
@@ -262,7 +263,7 @@ export default function Home() {
         <div style={{ background: "#fff", padding: 24 }}>
           <div>
             <Table
-              pagination={{ defaultPageSize: 100 }}
+              pagination={{ defaultPageSize: 400 }}
               loading={isLoading}
               dataSource={dataSource}
               columns={columns}
