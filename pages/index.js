@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Layout, Row, Col, Button, PageHeader, Input, Table } from "antd";
 import { GithubOutlined } from "@ant-design/icons";
 import useSWR from "swr";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   timeDifferenceForDate,
 } from "readable-timestamp-js";
@@ -136,29 +136,46 @@ const columns = [
   },
 ];
 
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
+const fetcher = (url) => fetch(url).then((res) => {
+
+  return res.json()
+});
 
 function usePrices() {
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [timeSinceUpdate, setTimeSinceUpdate] = useState(0)
+
+  useEffect(() => {
+    const intervalId = setInterval(() => setTimeSinceUpdate(new Date().getSeconds() - lastUpdated.getSeconds()), 1000)
+    return () => clearInterval(intervalId);
+  }, [lastUpdated])
 
 
+
+
+  //5 minute update data
   const { data: tempPrice1, error1 } = useSWR(
     "https://prices.runescape.wiki/api/v1/osrs/5m",
     fetcher,
     {
+      refreshInterval: 1000
+    },
+  );
+
+  //1 minute update data
+  const { data: tempPrice2, error2 } = useSWR(
+    "https://prices.runescape.wiki/api/v1/osrs/latest",
+    fetcher,
+    {
       refreshInterval: 1000, onSuccess: (data) => {
-        const didDataChange = JSON.stringify(data) !== JSON.stringify(tempPrice1)
+        const didDataChange = JSON.stringify(data) !== JSON.stringify(tempPrice2)
         if (didDataChange) {
+          console.log('new data', new Date())
           setLastUpdated(new Date());
         }
 
       }
-    },
-  );
-  const { data: tempPrice2, error2 } = useSWR(
-    "https://prices.runescape.wiki/api/v1/osrs/latest",
-    fetcher,
-    { refreshInterval: 1000 }
+    }
   );
   const { data: allItems, error3 } = useSWR(
     "https://prices.runescape.wiki/api/v1/osrs/mapping",
@@ -183,7 +200,8 @@ function usePrices() {
     const { avgHighPrice, highPriceVolume, avgLowPrice, lowPriceVolume } =
       price1[key] || {};
     const { high, low, highTime, lowTime } = price2[key] || {};
-    const tax = high * 0.01;
+    const tax = high * 0.01 < 5000000 ? high * .01 : 5000000
+
     const sellValue = high - tax;
     // const profit = (sellValue - low) * Math.min(volumes.data[key] / 24, limit);
     const averageHighTax = avgHighPrice * 0.01;
@@ -198,6 +216,7 @@ function usePrices() {
       margin: sellValue - low,
       id: key,
       profit,
+      tax,
       avgHighPrice,
       avgLowPrice,
       high: high?.toLocaleString(),
@@ -220,12 +239,12 @@ function usePrices() {
     data,
     isLoading: false,
     isError: error1 || error2 || error3 || error4,
-    lastUpdated
+    timeSinceUpdate,
   };
 }
 
 export default function Home() {
-  const { data: dataSource, isLoading, isError, lastUpdated } = usePrices();
+  const { data: dataSource, isLoading, isError, timeSinceUpdate } = usePrices();
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Header style={{ backgroundColor: "#d9d9d9" }}>
@@ -255,9 +274,9 @@ export default function Home() {
         </Row>
       </Header>
       <Content style={{ padding: "0 24px", marginTop: 16 }}>
-        {lastUpdated && <PageHeader style={{ backgroundColor: "#fff" }} title="Item Flipper">
+        {timeSinceUpdate && <PageHeader style={{ backgroundColor: "#fff" }} title="Item Flipper">
           See the highest profit items to flip based on spread volume and limit.
-          Data last updated {new Date() - lastUpdated} seconds ago.
+          Data last updated {timeSinceUpdate} seconds ago.
         </PageHeader>}
 
         <div style={{ background: "#fff", padding: 24 }}>
