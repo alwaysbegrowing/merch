@@ -142,7 +142,7 @@ const fetcher = (url) => fetch(url).then((res) => {
 });
 
 function usePrices() {
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   const [timeSinceUpdate, setTimeSinceUpdate] = useState(0)
 
   useEffect(() => {
